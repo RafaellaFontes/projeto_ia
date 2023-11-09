@@ -1,5 +1,5 @@
 // Chave de API
-const apiKey = "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";
+const apiKey = "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";
 
 // Variável para verificar se o quiz já foi iniciado
 let quizStarted = false;
@@ -157,7 +157,7 @@ async function sendMessageToGPT(message, response) {
   },
   body: JSON.stringify({
     model: "text-davinci-003",
-    prompt: message,
+    prompt: message.value,
     max_tokens: 2048,
     temperature: 0.5
   })
@@ -168,8 +168,15 @@ async function sendMessageToGPT(message, response) {
       let r = response.choices[0]['text'];
       status.style.display = 'none';
 
+      
+
       // Verificar se a mensagem contém o texto específico
       if (message.includes("Iniciar Quiz")) {
+        if (!historyBox) {
+          historyBox = document.createElement("div");
+          historyBox.className = "historic";
+          document.body.appendChild(historyBox);
+        }
         // Criar e adicionar mensagem informativa ao histórico
         const boxResponseMessage = document.createElement("div");
         boxResponseMessage.className = "box-response-message";
@@ -180,6 +187,7 @@ async function sendMessageToGPT(message, response) {
 
         boxResponseMessage.appendChild(chatResponse);
         historyBox.appendChild(boxResponseMessage);
+
 
         // Adicionar os botões de linguagem à área de histórico (historyBox)
         const languageOptions = ["Java", "C#", "Python", "JavaScript"];
@@ -197,10 +205,39 @@ async function sendMessageToGPT(message, response) {
        
         });
         
+        if (message.includes("Java")) {
+          if (!historyBox) {
+            historyBox = document.createElement("div");
+            historyBox.className = "historic";
+            document.body.appendChild(historyBox);
+          }
+          const boxResponseMessage = document.createElement("div");
+        boxResponseMessage.className = "box-response-message";
+
+        const chatResponse = document.createElement("p");
+        chatResponse.className = "response-message";
+        chatResponse.innerHTML = "O que é Java?";
+
+        boxResponseMessage.appendChild(chatResponse);
+        historyBox.appendChild(boxResponseMessage);
+
+        const answerOptions = ["Um tipo de café", "Uma ilha no Caribe", "Uma linguagem de programação", "Um animal selvagem"];
+        const answerButtons = answerOptions.map((answer) => {
+          const button = document.createElement("button");
+          button.innerHTML = answer;
+          button.className = "answer-button";
+          button.addEventListener("click", () => {
+            // Enviar mensagem para o GPT-3 quando um botão de linguagem for clicado
+            message = answer;
+            sendMessageToGPT(`${answer}`);
+          });
+          historyBox.appendChild(button); // Adicionar botão ao historyBox
+          return button;
+       
+        });
+        }
       }
-      if (message.includes("Java") || message.includes("C#") || message.includes("Python") || message.includes("JavaScript")) {
-        quiz();
-      }
+
   
     })
     .catch((e) => {
@@ -216,70 +253,7 @@ async function sendMessageToGPT(message, response) {
       messageInput.value = '';
     });
 }
-function quiz() {
-  var historyBox = document.getElementById("historic");
 
-  // Criar elemento de histórico se não existir
-  if (!historyBox) {
-    historyBox = document.createElement("div");
-    historyBox.className = "historic";
-    document.body.appendChild(historyBox);
-  }
-  // Criar e adicionar mensagem informativa ao histórico
-  const boxResponseMessage = document.createElement("div");
-  boxResponseMessage.className = "box-response-message";
-
-  const chatResponse = document.createElement("p");
-  chatResponse.className = "response-message";
-  chatResponse.innerHTML = "Aguarde, carregando pergunta...";
-
-  boxResponseMessage.appendChild(chatResponse);
-  historyBox.appendChild(boxResponseMessage);
-
-  fetch("https://api.openai.com/v1/completions", {
-    method: 'GET',
-    headers: {
-      Accept: "application/json",
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify({
-      model: "text-davinci-003",
-      prompt: message.value,
-      max_tokens: 2048,
-      temperature: 0.5
-    })
-  })
-
-  .then((response) => response.json())
-  .then((questionData) => {
-    // Obter a pergunta da resposta da API
-    const question = questionData.question;
-
-    // Substituir a mensagem informativa pela pergunta obtida
-    chatResponse.innerHTML = question;
-
-    // Adicionar opções de resposta à área de histórico (historyBox)
-    const answerOptions = questionData.options;
-    const answerButtons = answerOptions.slice(0, 4).map((answer) => {
-      const button = document.createElement("button");
-      button.innerHTML = answer;
-      button.className = "answer-button";
-      button.addEventListener("click", () => {
-        // Enviar resposta selecionada para a API ou processar localmente, conforme necessário
-        sendMessageToGPT(answer);
-      });
-      historyBox.appendChild(button); // Adicionar botão ao historyBox
-      return button;
-    });
-  })
-  .catch((e) => {
-    console.log(`Error -> ${e}`);
-    // Exibir mensagem de erro no status
-    chatResponse.innerHTML = 'Erro ao carregar pergunta. Tente novamente mais tarde.';
-  });
-}
-// Chame startQuiz() ou qualquer outra função necessária para ativar o código.
 startQuiz();
 
 
